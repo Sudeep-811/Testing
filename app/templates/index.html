@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Uptime Monitor</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Modern Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <h1>Uptime Monitor</h1>
+
+        <div class="container">
+            <input type="text" id="urlInput" placeholder="Enter website URL">
+            <button onclick="addMonitor()">Add</button>
+
+            <ul id="monitorList"></ul>
+        </div>
+
+        <footer>
+            <p>© 2026 Uptime Monitor</p>
+        </footer>
+    </div>
+
+    <script>
+        async function fetchMonitors() {
+            const res = await fetch('/api/monitors');
+            const data = await res.json();
+
+            const list = document.getElementById('monitorList');
+            list.innerHTML = '';
+
+            data.forEach(m => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="url">${m.url}</span>
+                    <span class="status ${m.status}">
+                        ${m.status === 'UP' ? '🟢 Online' : m.status === 'DOWN' ? '🔴 Offline' : '🟡 Unknown'}
+                    </span>
+                    <button class="delete" onclick="deleteMonitor(${m.id})">Remove</button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        async function addMonitor() {
+            const url = document.getElementById('urlInput').value;
+
+            await fetch('/api/monitors', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+
+            fetchMonitors();
+        }
+
+        async function deleteMonitor(id) {
+            await fetch(`/api/monitors/${id}`, {
+                method: 'DELETE'
+            });
+
+            fetchMonitors();
+        }
+
+        setInterval(fetchMonitors, 5000);
+        fetchMonitors();
+    </script>
+</body>
+</html>
